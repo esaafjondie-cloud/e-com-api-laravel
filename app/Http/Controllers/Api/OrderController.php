@@ -69,9 +69,11 @@ class OrderController extends Controller
         });
     }
 
-    public function show($id)
+    public function show($id, Request $request)
     {
-        $order = Order::with(['items.product', 'user'])->findOrFail($id);
+        $order = Order::with(['items.product', 'user'])
+            ->where('user_id', $request->user()->id)
+            ->findOrFail($id);
 
         return new OrderResource($order);
     }
