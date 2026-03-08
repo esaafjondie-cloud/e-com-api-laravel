@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Filament\Vendor\Resources;
+namespace App\Filament\Resources;
 
-use App\Filament\Vendor\Resources\OrderResource\Pages;
-use App\Filament\Vendor\Resources\OrderResource\RelationManagers;
+use App\Filament\Resources\OrderResource\Pages;
+use App\Filament\Resources\OrderResource\RelationManagers;
 use App\Models\Order;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -20,14 +20,22 @@ class OrderResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-shopping-cart';
     protected static ?string $navigationLabel = 'Orders';
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 4;
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Update Order Status')
+                Forms\Components\Section::make('Order Details')
                     ->schema([
+                        Forms\Components\TextInput::make('shipping_address')
+                            ->required()
+                            ->maxLength(500),
+                        Forms\Components\TextInput::make('shipping_phone')
+                            ->required(),
+                        Forms\Components\Textarea::make('notes')
+                            ->rows(2)
+                            ->nullable(),
                         Forms\Components\Select::make('status')
                             ->options([
                                 'unpaid'         => 'Unpaid',
@@ -37,7 +45,7 @@ class OrderResource extends Resource
                                 'shipping_issue' => 'Shipping Issue',
                             ])
                             ->required(),
-                    ]),
+                    ])->columns(2),
             ]);
     }
 
@@ -59,20 +67,20 @@ class OrderResource extends Resource
                                 'unpaid'         => 'danger',
                                 'paid'           => 'success',
                                 'shipped'        => 'info',
-                                'delivered'      => 'primary',
+                                'delivered'      => 'success',
                                 'shipping_issue' => 'warning',
                                 default          => 'secondary',
                             }),
                         Infolists\Components\TextEntry::make('notes'),
                     ])->columns(2),
 
-                Infolists\Components\Section::make('Payment Receipt — Verify Payment')
+                Infolists\Components\Section::make('Payment Receipt')
                     ->schema([
                         Infolists\Components\ImageEntry::make('payment_receipt_image')
-                            ->label('Receipt Image uploaded by customer')
+                            ->label('Receipt Image')
                             ->disk('public')
-                            ->width(450)
-                            ->height(350),
+                            ->width(400)
+                            ->height(300),
                     ]),
             ]);
     }
@@ -116,9 +124,13 @@ class OrderResource extends Resource
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
-                // NO Delete action for Vendor — security constraint
+                Tables\Actions\DeleteAction::make(),
             ])
-            ->bulkActions([])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
+            ])
             ->defaultSort('created_at', 'desc');
     }
 
@@ -133,6 +145,7 @@ class OrderResource extends Resource
     {
         return [
             'index'  => Pages\ListOrders::route('/'),
+            'create' => Pages\CreateOrder::route('/create'),
             'view'   => Pages\ViewOrder::route('/{record}'),
             'edit'   => Pages\EditOrder::route('/{record}/edit'),
         ];

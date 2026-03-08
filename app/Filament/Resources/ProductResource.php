@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Filament\Vendor\Resources;
+namespace App\Filament\Resources;
 
-use App\Filament\Vendor\Resources\ProductResource\Pages;
-use App\Filament\Vendor\Resources\ProductResource\RelationManagers;
+use App\Filament\Resources\ProductResource\Pages;
+use App\Filament\Resources\ProductResource\RelationManagers;
 use App\Models\Category;
 use App\Models\Product;
 use Filament\Forms;
@@ -19,7 +19,7 @@ class ProductResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-shopping-bag';
     protected static ?string $navigationLabel = 'Products';
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 3;
 
     public static function form(Form $form): Form
     {
@@ -104,7 +104,8 @@ class ProductResource extends Resource
             ->filters([
                 SelectFilter::make('category')
                     ->relationship('category', 'name'),
-                Tables\Filters\TernaryFilter::make('is_active')->label('Active'),
+                Tables\Filters\TernaryFilter::make('is_active')
+                    ->label('Active'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

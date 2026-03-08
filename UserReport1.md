@@ -1,212 +1,192 @@
-# تقرير تحليل المشروع - نظام التجارة الإلكترونية
+# تقرير تطوير المشروع — الجلسة 4
 
-**تاريخ التقرير:** 05 مارس 2026  
+**تاريخ التقرير:** 08 مارس 2026  
 **المعد:** مهندس البرمجيات (AI Agent)  
 **اللغة:** عربي حصراً
 
 ---
 
-## 1. نظرة عامة على المشروع
+## ملخص ما تم تنفيذه في هذه الجلسة
 
-هذا المشروع عبارة عن **نظام خلفي (Backend) لمتجر إلكتروني أحادي البائع** مبني على:
+### Phase 1: تطوير Admin Panel — Filament Resources (كاملة)
 
-| التقنية         | الإصدار | الغرض                       |
-| --------------- | ------- | --------------------------- |
-| Laravel         | 12      | إطار العمل الرئيسي          |
-| FilamentPHP     | 3.3     | لوحات تحكم Admin و Vendor   |
-| Laravel Sanctum | —       | المصادقة عبر API            |
-| MySQL           | —       | قاعدة البيانات              |
-| Scribe          | —       | توثيق API (OpenAPI/Swagger) |
-| PHP             | 8.2+    | لغة البرمجة                 |
+#### UserResource (مُحسَّن)
 
----
+- إضافة حقول `phone`, `role`, `avatar` للفورم
+- إضافة أعمدة `BadgeColumn` للأدوار مع ألوان تمييزية (Admin=أحمر، Vendor=أصفر، User=أخضر)
+- إضافة فلتر الدور
+- تعديل `password` ليكون اختيارياً عند التعديل (hash تلقائي)
 
-## 2. المميزات الجوهرية للمشروع
+#### SystemSettingResource (مُحسَّن)
 
-### 2.1 نظام الأدوار (Role-Based Access Control)
+- فورم ذكي: حقل `FileUpload` يظهر تلقائياً للمفاتيح التي تحتوي على `qr`
+- حقل `TextInput` للإعدادات النصية
+- حقل `key` يصبح للقراءة فقط عند التعديل
 
-يتضمن المشروع ثلاثة أدوار رئيسية:
+#### CategoryResource (جديد — Admin)
 
-- **Admin (مدير النظام):** يملك صلاحية على جميع بيانات التطبيق ويدير إعدادات الدفع والمستخدمين.
-- **Vendor (البائع):** يدير الفئات والمنتجات ويعالج الطلبات يدوياً.
-- **User (المستخدم العادي):** يتفاعل مع النظام عبر الـ API (تطبيق الجوال).
+- CRUD كامل مع Toggle للتفعيل/التعطيل
+- رفع صورة الفئة
 
-### 2.2 نظام الدفع اليدوي عبر "شام كاش"
+#### ProductResource (جديد — Admin)
 
-الميزة الحاسمة في المشروع هي **آلية التحقق اليدوي من الدفع**:
+- فورم شامل: اسم، وصف، فئة، سعر، مخزون، رابط خارجي، حالة
+- رفع الصورة الرئيسية
+- ربط `ProductImagesRelationManager` لإدارة معرض الصور
 
-1. يرفع المدير صورة QR Code الخاصة بـ "شام كاش" في الإعدادات.
-2. يجلب التطبيق (API) هذا الكود عند الدفع.
-3. يتحول المستخدم للدفع خارجياً ثم يرفع صورة إيصال الدفع عند تقديم الطلب.
-4. يراجع البائع صورة الإيصال يدوياً في لوحة التحكم ويحدّث حالة الطلب.
+#### OrderResource (جديد — Admin)
 
----
-
-## 3. هيكل قاعدة البيانات
-
-### جداول قاعدة البيانات المنفذة (13 جدول):
-
-| الجدول               | الوصف                                                       |
-| -------------------- | ----------------------------------------------------------- |
-| `users`              | المستخدمون بأدوارهم (admin, vendor, user) مع FCM token      |
-| `verification_codes` | رموز OTP للتحقق من البريد الإلكتروني                        |
-| `system_settings`    | إعدادات النظام (مفتاح-قيمة) مثل QR Code                     |
-| `categories`         | فئات المنتجات مع صورة وحالة تفعيل                           |
-| `products`           | المنتجات مع السعر والمخزون والصورة الرئيسية والرابط الخارجي |
-| `product_images`     | معرض صور المنتج (علاقة one-to-many)                         |
-| `orders`             | الطلبات مع حالة Enum ومسار صورة الإيصال                     |
-| `order_items`        | تفاصيل عناصر كل طلب (مع قفل السعر وقت الشراء)               |
-| `carts`              | عربات التسوق للمستخدمين                                     |
-| `cart_items`         | عناصر عربة التسوق                                           |
-| `favorites`          | المفضلة (علاقة many-to-many بين User و Product)             |
-| `cache`              | جدول تخزين الـ Cache (Laravel)                              |
-| `jobs`               | جدول قوائم الانتظار                                         |
-
-### حالات الطلب (Order State Machine):
-
-```
-unpaid → paid → shipped → delivered
-                       ↘ shipping_issue
-```
+- عرض كل الطلبات مع حالاتها
+- `ImageEntry` لعرض صورة إيصال الدفع في صفحة View
+- `OrderItemsRelationManager` لعرض تفاصيل المنتجات المطلوبة
+- إجراء تحديث الحالة
 
 ---
 
-## 4. هيكل الكود البرمجي
+### Phase 2: RelationManagers (جديدة)
 
-### 4.1 النماذج (Models) - 10 نماذج
+| الـ RelationManager            | يوجد في                        | الوظيفة                                         |
+| ------------------------------ | ------------------------------ | ----------------------------------------------- |
+| `ProductImagesRelationManager` | Admin + Vendor ProductResource | رفع وإدارة صور معرض المنتج                      |
+| `OrderItemsRelationManager`    | Admin + Vendor OrderResource   | عرض عناصر الطلب (اسم المنتج، كمية، سعر، إجمالي) |
+
+---
+
+### Phase 3: Widgets (جديدة — Admin)
+
+| الـ Widget           | البيانات                                         |
+| -------------------- | ------------------------------------------------ |
+| `AdminStatsWidget`   | إجمالي الإيرادات (SYP)، عدد العملاء، عدد الطلبات |
+| `RevenueChartWidget` | مخطط خطي لإيرادات آخر 6 أشهر                     |
+
+---
+
+### Phase 4: Vendor Panel — تطوير كامل للـ Resources
+
+#### CategoryResource (Vendor) — مُحسَّن
+
+- فورم: اسم + صورة FileUpload + Toggle
+- جدول: صورة + اسم + حالة + عدد المنتجات
+
+#### ProductResource (Vendor) — مُحسَّن
+
+- فورم شامل: اسم، فئة، وصف، سعر، مخزون، رابط، حالة، صورة رئيسية
+- ربط `ProductImagesRelationManager`
+
+#### OrderResource (Vendor) — مُحسَّن (محور النظام)
+
+- عرض صورة الإيصال بوضوح في صفحة `View` مع عنوان "Payment Receipt — Verify Payment"
+- إجراء تحديث الحالة (unpaid → paid → shipped → delivered)
+- **لا يوجد زر حذف** للبائع (قيد أمني)
+- `OrderItemsRelationManager` لعرض ما يجب تحضيره
+
+---
+
+### Phase 5: VendorStatsWidget (جديد)
+
+- طلبات معلقة (unpaid)
+- طلبات جاهزة للشحن (paid)
+- طلبات مشحونة (shipped)
+- **بدون أرقام مالية** (قيد أمني كما في الخطة)
+
+---
+
+### Phase 6: إصلاحات متنوعة
+
+#### VendorPanelProvider
+
+- إضافة `->login()` لتفعيل صفحة تسجيل الدخول
+- تغيير اللون من Amber إلى Emerald للتمييز عن Admin
+
+#### bootstrap/app.php — معالجة الأخطاء
+
+- تسجيل `api.php` بشكل صريح
+- `ModelNotFoundException` → يُرجع JSON 404
+- `NotFoundHttpException` → يُرجع JSON 404
+- `ValidationException` → يُرجع JSON 422 مع `errors` object للـ Flutter
+
+#### DatabaseSeeder — محدَّث
+
+- `admin@example.com` → **`admin@app.com`** (كما في requirement.md)
+- `vendor@example.com` → **`vendor@app.com`**
+- 5 مستخدمين عاديين (user1@app.com ... user5@app.com)
+- 5 فئات × 4 منتجات = **20 منتجاً**
+- 3 طلبات بحالات متنوعة (unpaid, paid, shipped)
+- عربة، مفضلة، معرض صور لكل منتج
+
+---
+
+### Phase 7: Scribe Annotations — توثيق API
+
+أُضيفت DocBlocks شاملة لـ:
+
+| الملف                   | ما أُضيف                                                                |
+| ----------------------- | ----------------------------------------------------------------------- |
+| `AuthController.php`    | `@group Auth`, `@unauthenticated`, `@bodyParam`, `@response` لكل method |
+| `OrderController.php`   | `@group Orders`, `@authenticated`, توثيق `file` upload بالتفصيل         |
+| `StoreOrderRequest.php` | `@bodyParam` لكل حقل مع أمثلة ورسائل خطأ واضحة                          |
+
+---
+
+## نتائج التحقق
+
+### ✅ migrate:fresh --seed
 
 ```
-app/Models/
-├── User.php          - يطبق FilamentUser + HasApiTokens + canAccessPanel()
-├── Order.php         - علاقات user() و items()
-├── OrderItem.php     - تفاصيل الطلب
-├── Cart.php          - عربة التسوق
-├── CartItem.php      - عناصر العربة
-├── Category.php      - الفئات
-├── Product.php       - المنتجات مع العلاقات
-├── ProductImage.php  - صور المنتجات
-├── Favorite.php      - المفضلة
-└── SystemSetting.php - إعدادات النظام
+INFO  Running migrations.  ← 13 جدول
+INFO  Seeding database.    ← لا أخطاء
 ```
 
-### 4.2 وحدات تحكم API (API Controllers) - 6 وحدات
+### ✅ route:list (19 مسار API)
 
 ```
-app/Http/Controllers/Api/
-├── AuthController.php      - التسجيل + OTP + تسجيل الدخول + تسجيل الخروج
-├── OrderController.php     - إنشاء الطلبات + عرضها (مع Transaction DB)
-├── CartController.php      - إدارة عربة التسوق (CRUD)
-├── FavoriteController.php  - إدارة المفضلة
-├── ProductController.php   - عرض المنتجات مع الفلترة
-└── SettingsController.php  - جلب QR Code والإعدادات
-```
-
-### 4.3 لوحة Admin Panel (Filament)
-
-```
-app/Filament/Resources/
-├── UserResource.php          - إدارة المستخدمين والأدوار
-└── SystemSettingResource.php - رفع QR Code والإعدادات
-```
-
-### 4.4 لوحة Vendor Panel (Filament)
-
-```
-app/Filament/Vendor/Resources/
-├── CategoryResource.php - إدارة الفئات
-├── ProductResource.php  - إدارة المنتجات مع معرض الصور
-└── OrderResource.php    - معالجة الطلبات + عرض إيصال الدفع
-```
-
-### 4.5 API Resources (JSON Transformation) - 3 موارد
-
-```
-app/Http/Resources/
-├── UserResource.php    - بيانات المستخدم في API
-├── OrderResource.php   - بيانات الطلب مع العناصر
-└── ProductResource.php - بيانات المنتج مع الصور
+GET|HEAD  api/cart
+POST      api/cart
+PUT       api/cart/{id}
+DELETE    api/cart/{id}
+GET|HEAD  api/favorites
+POST      api/favorites
+DELETE    api/favorites/{productId}
+POST      api/login
+POST      api/logout
+GET|HEAD  api/me
+GET|HEAD  api/orders
+POST      api/orders
+GET|HEAD  api/orders/{id}
+GET|HEAD  api/products
+GET|HEAD  api/products/{id}
+POST      api/register
+GET|HEAD  api/settings
+POST      api/verify-email
+GET|HEAD  docs.openapi  ← Scribe مُعدّ
 ```
 
 ---
 
-## 5. نقاط نهاية الـ API (API Endpoints)
+## حالة المشروع النهائية
 
-### المسارات العامة (بدون مصادقة):
-
-| الطريقة | المسار               | الوصف                          |
-| ------- | -------------------- | ------------------------------ |
-| POST    | `/api/register`      | تسجيل مستخدم جديد + OTP        |
-| POST    | `/api/verify-email`  | التحقق من OTP                  |
-| POST    | `/api/login`         | تسجيل الدخول + Bearer Token    |
-| GET     | `/api/settings`      | جلب QR Code والإعدادات         |
-| GET     | `/api/products`      | قائمة المنتجات مع فلترة وترقيم |
-| GET     | `/api/products/{id}` | تفاصيل منتج واحد               |
-
-### المسارات المحمية (تتطلب Bearer Token):
-
-| الطريقة | المسار                       | الوصف                                |
-| ------- | ---------------------------- | ------------------------------------ |
-| GET     | `/api/me`                    | بيانات المستخدم الحالي               |
-| POST    | `/api/logout`                | تسجيل الخروج                         |
-| GET     | `/api/orders`                | قائمة طلبات المستخدم                 |
-| POST    | `/api/orders`                | إنشاء طلب جديد (multipart/form-data) |
-| GET     | `/api/orders/{id}`           | تفاصيل طلب                           |
-| GET     | `/api/cart`                  | عرض العربة                           |
-| POST    | `/api/cart`                  | إضافة عنصر للعربة                    |
-| PUT     | `/api/cart/{id}`             | تعديل كمية العنصر                    |
-| DELETE  | `/api/cart/{id}`             | حذف عنصر من العربة                   |
-| GET     | `/api/favorites`             | قائمة المفضلة                        |
-| POST    | `/api/favorites`             | إضافة للمفضلة                        |
-| DELETE  | `/api/favorites/{productId}` | حذف من المفضلة                       |
+| المكون                       | الحالة           |
+| ---------------------------- | ---------------- |
+| Admin Panel (5 Resources)    | ✅ مكتمل بالكامل |
+| Vendor Panel (3 Resources)   | ✅ مكتمل بالكامل |
+| RelationManagers (4 ملفات)   | ✅ مكتمل         |
+| Admin Widgets (2)            | ✅ مكتمل         |
+| Vendor Widget                | ✅ مكتمل         |
+| API Routes (19)              | ✅ مكتمل         |
+| Error Handling (JSON)        | ✅ مكتمل         |
+| DatabaseSeeder (20 products) | ✅ مكتمل         |
+| Scribe Annotations           | ✅ مكتمل         |
 
 ---
 
-## 6. منطق تنفيذ الطلب (Order Transaction Logic)
+## بيانات الدخول للاختبار
 
-المنفذ في `OrderController@store` باستخدام `DB::transaction()`:
-
-1. **التحقق:** يتحقق من خلو العربة.
-2. **الحساب:** يحسب الإجمالي من عناصر العربة × السعر.
-3. **الرفع:** يرفع صورة الإيصال إلى `public/receipts`.
-4. **الإنشاء:** يُنشئ سجل الطلب بحالة `unpaid`.
-5. **النقل:** ينقل عناصر العربة إلى `order_items` (مع قفل السعر الحالي).
-6. **التنظيف:** يُفرغ عربة التسوق بعد الطلب.
-7. **الاستجابة:** يُعيد `OrderResource` بكود HTTP 201.
+| الدور  | البريد         | كلمة المرور |
+| ------ | -------------- | ----------- |
+| Admin  | admin@app.com  | password    |
+| Vendor | vendor@app.com | password    |
+| User 1 | user1@app.com  | password    |
 
 ---
 
-## 7. ملاحظات تقنية وأمنية
-
-### نقاط القوة:
-
-- ✅ استخدام `DB::transaction()` في عملية الطلب لضمان تكامل البيانات.
-- ✅ تطبيق `canAccessPanel()` في نموذج User للتحكم في وصول الـ Filament Panels.
-- ✅ استخدام `FormRequest` لكل التحققات.
-- ✅ تقييد حذف الطلبات من لوحة البائع.
-- ✅ عزل البائع مالياً (لا يرى الإيرادات الكلية).
-- ✅ قفل سعر المنتج وقت الشراء في `order_items.price`.
-
-### مشاكل مكتشفة في الكود:
-
-- ⚠️ **خطأ في `User.php`:** الدالة `casts()` تحتوي على `return` مزدوج في نفس الدالة (السطران 36-43). يجب حذف الكتلة المكررة.
-- ⚠️ **دالة `show` في `OrderController`:** لا تتحقق من أن الطلب يعود للمستخدم الحالي (ثغرة IDOR محتملة للـ API). يجب إضافة `where('user_id', auth()->id())`.
-
----
-
-## 8. ملخص حالة المشروع
-
-| المكون                | الحالة                                                 |
-| --------------------- | ------------------------------------------------------ |
-| المايغريشنز (13 ملف)  | ✅ منجز                                                |
-| النماذج (10 ملفات)    | ✅ منجز مع ملاحظة خطأ طفيف                             |
-| API Controllers (6)   | ✅ منجز                                                |
-| Filament Admin Panel  | ✅ منجز                                                |
-| Filament Vendor Panel | ✅ منجز                                                |
-| API Routes            | ✅ منجز                                                |
-| API Resources         | ✅ منجز                                                |
-| توثيق Scribe/Swagger  | ✅ مُعد ويمكن التوليد بـ `php artisan scribe:generate` |
-| نظام Seeders          | ⚠️ يحتاج مراجعة                                        |
-
----
-
-_تم إعداد هذا التقرير بواسطة نظام AI Agent بتاريخ 05 مارس 2026_
+_تم إعداد هذا التقرير بتاريخ 08 مارس 2026 — بواسطة AI Agent_
