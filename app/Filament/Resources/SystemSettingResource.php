@@ -19,6 +19,16 @@ class SystemSettingResource extends Resource
     protected static ?string $navigationLabel = 'System Settings';
     protected static ?int $navigationSort = 5;
 
+    public static function canCreate(): bool
+    {
+        return false;
+    }
+
+    public static function canDelete(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        return false;
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -39,20 +49,32 @@ class SystemSettingResource extends Resource
                 Forms\Components\Section::make('Value')
                     ->schema([
                         // For QR Code - show FileUpload
-                        Forms\Components\FileUpload::make('value')
+                        Forms\Components\FileUpload::make('qr_value')
                             ->label('QR Code Image')
                             ->image()
                             ->disk('public')
                             ->directory('qr_codes')
                             ->visible(fn(Get $get) => str_contains($get('key') ?? '', 'qr'))
-                            ->helperText('Upload the Sham Cash QR Code image'),
+                            ->helperText('Upload the Sham Cash QR Code image')
+                            ->afterStateHydrated(function(Forms\Components\FileUpload $component, $state, ?\Illuminate\Database\Eloquent\Model $record) {
+                                if ($record && str_contains($record->key, 'qr') && !empty($record->value)) {
+                                    $component->state([$record->value => $record->value]);
+                                }
+                            })
+                            ->dehydrated(fn (Get $get) => str_contains($get('key') ?? '', 'qr')),
 
                         // For text settings - show TextInput
-                        Forms\Components\TextInput::make('value')
+                        Forms\Components\TextInput::make('text_value')
                             ->label('Value')
                             ->maxLength(1000)
                             ->visible(fn(Get $get) => !str_contains($get('key') ?? '', 'qr'))
-                            ->helperText('Text value for this setting'),
+                            ->helperText('Text value for this setting')
+                            ->afterStateHydrated(function(Forms\Components\TextInput $component, $state, ?\Illuminate\Database\Eloquent\Model $record) {
+                                if ($record && !str_contains($record->key, 'qr')) {
+                                    $component->state($record->value);
+                                }
+                            })
+                            ->dehydrated(fn (Get $get) => !str_contains($get('key') ?? '', 'qr')),
                     ]),
             ]);
     }

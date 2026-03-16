@@ -24,8 +24,9 @@ class VendorPanelProvider extends PanelProvider
     {
         return $panel
             ->id('vendor')
-            ->path('vendor')
+            ->path('vendor-panel')
             ->login()
+            ->spa()
             ->colors([
                 'primary' => Color::Emerald,
             ])
