@@ -6,19 +6,24 @@ use App\Filament\Resources\SystemSettingResource\Pages;
 use App\Models\SystemSetting;
 use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 
+/**
+ * SystemSettingResource — manages the single settings record.
+ * Create/Delete are disabled because exactly one record exists.
+ * Admin edits phone & QR code from the list/edit page.
+ */
 class SystemSettingResource extends Resource
 {
     protected static ?string $model = SystemSetting::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
+    protected static ?string $navigationIcon  = 'heroicon-o-cog-6-tooth';
     protected static ?string $navigationLabel = 'System Settings';
-    protected static ?int $navigationSort = 5;
+    protected static ?int    $navigationSort  = 5;
 
+    // Only one record ever exists — disable create & delete
     public static function canCreate(): bool
     {
         return false;
@@ -33,48 +38,23 @@ class SystemSettingResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Setting Details')
+                Forms\Components\Section::make('Contact Information')
                     ->schema([
-                        Forms\Components\TextInput::make('key')
+                        Forms\Components\TextInput::make('admin_phone')
+                            ->label('Admin Phone Number')
                             ->required()
-                            ->unique(ignoreRecord: true)
-                            ->maxLength(255)
-                            ->disabled(fn(string $context) => $context === 'edit')
-                            ->helperText("e.g. 'sham_cash_qr', 'contact_phone'"),
-                        Forms\Components\Textarea::make('description')
-                            ->maxLength(500)
-                            ->rows(2),
-                    ])->columns(2),
+                            ->placeholder('+963912345678')
+                            ->helperText('The main contact number displayed to customers in the app.'),
+                    ]),
 
-                Forms\Components\Section::make('Value')
+                Forms\Components\Section::make('Payment — Sham Cash QR Code')
                     ->schema([
-                        // For QR Code - show FileUpload
-                        Forms\Components\FileUpload::make('qr_value')
+                        Forms\Components\FileUpload::make('sham_cash_qr')
                             ->label('QR Code Image')
                             ->image()
                             ->disk('public')
                             ->directory('qr_codes')
-                            ->visible(fn(Get $get) => str_contains($get('key') ?? '', 'qr'))
-                            ->helperText('Upload the Sham Cash QR Code image')
-                            ->afterStateHydrated(function(Forms\Components\FileUpload $component, $state, ?\Illuminate\Database\Eloquent\Model $record) {
-                                if ($record && str_contains($record->key, 'qr') && !empty($record->value)) {
-                                    $component->state([$record->value => $record->value]);
-                                }
-                            })
-                            ->dehydrated(fn (Get $get) => str_contains($get('key') ?? '', 'qr')),
-
-                        // For text settings - show TextInput
-                        Forms\Components\TextInput::make('text_value')
-                            ->label('Value')
-                            ->maxLength(1000)
-                            ->visible(fn(Get $get) => !str_contains($get('key') ?? '', 'qr'))
-                            ->helperText('Text value for this setting')
-                            ->afterStateHydrated(function(Forms\Components\TextInput $component, $state, ?\Illuminate\Database\Eloquent\Model $record) {
-                                if ($record && !str_contains($record->key, 'qr')) {
-                                    $component->state($record->value);
-                                }
-                            })
-                            ->dehydrated(fn (Get $get) => !str_contains($get('key') ?? '', 'qr')),
+                            ->helperText('Upload the Sham Cash QR Code image shown to customers at checkout.'),
                     ]),
             ]);
     }
@@ -83,31 +63,23 @@ class SystemSettingResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('key')
-                    ->searchable()
-                    ->sortable()
-                    ->badge()
-                    ->color('primary'),
-                Tables\Columns\TextColumn::make('value')
-                    ->limit(50)
-                    ->tooltip(fn($record) => $record->value),
-                Tables\Columns\TextColumn::make('description')
-                    ->limit(60)
-                    ->toggleable(),
+                Tables\Columns\TextColumn::make('admin_phone')
+                    ->label('Admin Phone')
+                    ->searchable(),
+                Tables\Columns\ImageColumn::make('sham_cash_qr')
+                    ->label('QR Code')
+                    ->disk('public')
+                    ->height(60),
                 Tables\Columns\TextColumn::make('updated_at')
+                    ->label('Last Updated')
                     ->dateTime()
                     ->sortable(),
             ])
             ->filters([])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ]);
+            ->bulkActions([]);
     }
 
     public static function getRelations(): array
@@ -118,9 +90,8 @@ class SystemSettingResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListSystemSettings::route('/'),
-            'create' => Pages\CreateSystemSetting::route('/create'),
-            'edit'   => Pages\EditSystemSetting::route('/{record}/edit'),
+            'index' => Pages\ListSystemSettings::route('/'),
+            'edit'  => Pages\EditSystemSetting::route('/{record}/edit'),
         ];
     }
 }

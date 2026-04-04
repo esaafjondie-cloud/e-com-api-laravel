@@ -51,15 +51,10 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
-        // 2. System Settings
-        SystemSetting::firstOrCreate(['key' => 'sham_cash_qr'], [
-            'value'       => 'qr_codes/shamcash_demo.png',
-            'description' => 'Scan to pay via Sham Cash',
-        ]);
-
-        SystemSetting::firstOrCreate(['key' => 'contact_phone'], [
-            'value'       => '+963999999999',
-            'description' => 'Admin contact phone number',
+        // 2. System Settings — Single record (not key/value)
+        SystemSetting::firstOrCreate(['id' => 1], [
+            'admin_phone'  => '+963999999999',
+            'sham_cash_qr' => 'qr_codes/shamcash_demo.png',
         ]);
 
         // 3. Categories — 5 categories
