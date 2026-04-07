@@ -194,4 +194,73 @@ class AuthController extends Controller
             ],
         ]);
     }
+
+    /**
+     * Update User Profile
+     *
+     * Updates the currently authenticated user's profile information.
+     *
+     * @group Authentication
+     * @authenticated
+     *
+     * @bodyParam name string Optional. The user's new name.
+     * @bodyParam email string Optional. The user's new email.
+     * @bodyParam phone string Optional. The user's new phone.
+     * @bodyParam password string Optional. New password.
+     * @bodyParam password_confirmation string Optional. Required if password is provided.
+     * @bodyParam avatar file Optional. The user's new avatar image.
+     *
+     * @response 200 {"message": "Profile updated successfully.", "data": {...}}
+     */
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+
+        $request->validate([
+            'name'     => 'sometimes|required|string|max:255',
+            'email'    => 'sometimes|required|string|email|max:255|unique:users,email,' . $user->id,
+            'phone'    => 'sometimes|required|string|unique:users,phone,' . $user->id,
+            'password' => 'sometimes|nullable|string|min:8|confirmed',
+            'avatar'   => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        if ($request->has('name')) {
+            $user->name = $request->name;
+        }
+
+        if ($request->has('email')) {
+            $user->email = $request->email;
+        }
+
+        if ($request->has('phone')) {
+            $user->phone = $request->phone;
+        }
+
+        if ($request->filled('password')) {
+            $user->password = Hash::make($request->password);
+        }
+
+        if ($request->hasFile('avatar')) {
+            // Delete old avatar if exists
+            if ($user->avatar && \Illuminate\Support\Facades\Storage::disk('public')->exists($user->avatar)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->avatar);
+            }
+            $path = $request->file('avatar')->store('avatars', 'public');
+            $user->avatar = $path;
+        }
+
+        $user->save();
+
+        return response()->json([
+            'message' => 'Profile updated successfully.',
+            'data'    => [
+                'id'     => $user->id,
+                'name'   => $user->name,
+                'email'  => $user->email,
+                'phone'  => $user->phone,
+                'role'   => $user->role,
+                'avatar' => $user->avatar ? asset('storage/' . $user->avatar) : null,
+            ],
+        ]);
+    }
 }

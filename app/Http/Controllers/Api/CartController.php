@@ -39,7 +39,7 @@ class CartController extends Controller
             ['user_id' => $request->user()->id]
         );
 
-        return response()->json($cart);
+        return response()->json(['data' => $cart]);
     }
 
     /**
@@ -85,7 +85,7 @@ class CartController extends Controller
 
         return response()->json([
             'message' => 'Item added to cart successfully.',
-            'cart_item' => $cartItem->load('product'),
+            'data' => $cartItem->load('product'),
         ]);
     }
 
@@ -120,7 +120,7 @@ class CartController extends Controller
 
         return response()->json([
             'message' => 'Cart item updated successfully.',
-            'cart_item' => $cartItem->load('product'),
+            'data' => $cartItem->load('product'),
         ]);
     }
 

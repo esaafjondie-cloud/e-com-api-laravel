@@ -61,7 +61,7 @@ class FavoriteController extends Controller
 
         return response()->json([
             'message' => 'Product added to favorites successfully.',
-            'favorite' => $favorite,
+            'data' => $favorite,
         ]);
     }
 
