@@ -35,7 +35,15 @@ class OrderController extends Controller
             ->latest()
             ->paginate(20);
 
-        return OrderResource::collection($orders);
+        return response()->json([
+            'data' => OrderResource::collection($orders),
+            'pagination' => [
+                'total' => $orders->total(),
+                'per_page' => $orders->perPage(),
+                'current_page' => $orders->currentPage(),
+                'last_page' => $orders->lastPage(),
+            ]
+        ]);
     }
 
     /**

@@ -37,7 +37,15 @@ class ProductController extends Controller
 
         $products = $query->paginate(20);
 
-        return ProductResource::collection($products);
+        return response()->json([
+            'data' => ProductResource::collection($products),
+            'pagination' => [
+                'total' => $products->total(),
+                'per_page' => $products->perPage(),
+                'current_page' => $products->currentPage(),
+                'last_page' => $products->lastPage(),
+            ]
+        ]);
     }
 
     /**
