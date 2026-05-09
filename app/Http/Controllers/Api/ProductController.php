@@ -12,13 +12,19 @@ class ProductController extends Controller
     /**
      * List Products
      *
-     * Returns a paginated list of active products. Can be filtered by category or search term.
+     * Returns a paginated list of active products. Can be filtered by category, search term,
+     * price range, stock availability, and sorted by various fields.
      *
      * @group Products
      * @unauthenticated
      *
      * @queryParam category_id integer optional Filter products by category ID. Example: 1
-     * @queryParam search string optional Search for products by name. Example: phone
+     * @queryParam search string optional Search for products by name or description. Example: phone
+     * @queryParam min_price numeric optional Minimum price filter. Example: 1000
+     * @queryParam max_price numeric optional Maximum price filter. Example: 50000
+     * @queryParam in_stock boolean optional Filter only products that are in stock. Example: true
+     * @queryParam sort_by string optional Sort field: price, name, created_at. Default: created_at. Example: price
+     * @queryParam sort_order string optional Sort direction: asc, desc. Default: desc. Example: asc
      *
      * @apiResourceCollection App\Http\Resources\ProductResource
      * @apiResourceModel App\Models\Product
@@ -27,13 +33,37 @@ class ProductController extends Controller
     {
         $query = Product::with(['category', 'images'])->where('is_active', true);
 
+        // Filter by category
         if ($request->has('category_id')) {
             $query->where('category_id', $request->category_id);
         }
 
+        // Search by name or description
         if ($request->has('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%');
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                  ->orWhere('description', 'like', '%' . $search . '%');
+            });
         }
+
+        // Filter by price range
+        if ($request->has('min_price')) {
+            $query->where('price', '>=', $request->min_price);
+        }
+        if ($request->has('max_price')) {
+            $query->where('price', '<=', $request->max_price);
+        }
+
+        // Filter by stock availability
+        if ($request->has('in_stock') && $request->in_stock === 'true') {
+            $query->inStock();
+        }
+
+        // Sorting
+        $sortBy = in_array($request->sort_by, ['price', 'name', 'created_at']) ? $request->sort_by : 'created_at';
+        $sortOrder = in_array($request->sort_order, ['asc', 'desc']) ? $request->sort_order : 'desc';
+        $query->orderBy($sortBy, $sortOrder);
 
         $products = $query->paginate(20);
 
@@ -51,7 +81,7 @@ class ProductController extends Controller
     /**
      * Get Product Details
      *
-     * Returns detailed information about a specific product.
+     * Returns detailed information about a specific product including its sizes, images, and category.
      *
      * @group Products
      * @unauthenticated

@@ -22,28 +22,28 @@ class AdminStatsOverview extends BaseWidget
         $totalUsers = User::count();
 
         return [
-            Stat::make('Total Revenue', number_format($totalRevenue, 2) . ' SYP')
-                ->description('Total delivered value')
+            Stat::make('إجمالي الإيرادات', number_format($totalRevenue, 2) . ' ل.س')
+                ->description('إجمالي القيمة المسلمة')
                 ->descriptionIcon('heroicon-m-banknotes')
                 ->color('success'),
 
-            Stat::make('Total Orders', $totalOrders)
-                ->description('All orders placed')
+            Stat::make('إجمالي الطلبات', $totalOrders)
+                ->description('كل الطلبات المقدمة')
                 ->descriptionIcon('heroicon-m-shopping-cart')
                 ->color('primary'),
 
-            Stat::make('Total Products', $totalProducts)
-                ->description('Products in catalog')
+            Stat::make('إجمالي المنتجات', $totalProducts)
+                ->description('المنتجات في الكتالوج')
                 ->descriptionIcon('heroicon-m-squares-2x2')
                 ->color('info'),
 
-            Stat::make('Total Categories', $totalCategories)
-                ->description('Available categories')
+            Stat::make('إجمالي الأقسام', $totalCategories)
+                ->description('الأقسام المتاحة')
                 ->descriptionIcon('heroicon-m-tag')
                 ->color('warning'),
 
-            Stat::make('Total Users', $totalUsers)
-                ->description('Registered accounts')
+            Stat::make('إجمالي المستخدمين', $totalUsers)
+                ->description('الحسابات المسجلة')
                 ->descriptionIcon('heroicon-m-users')
                 ->color('success'),
         ];

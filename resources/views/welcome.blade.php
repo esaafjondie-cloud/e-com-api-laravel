@@ -1,20 +1,20 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Ecommerce API - Welcome</title>
+    <title>المتجر الإلكتروني - مرحباً</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.bunny.net/css?family=tajawal:400,500,700&display=swap" rel="stylesheet" />
 
     <!-- Tailwind CSS (via CDN for simplicity in welcome view) -->
     <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Tajawal', sans-serif;
             background-color: #f3f4f6;
             margin: 0;
             padding: 0;
@@ -70,19 +70,19 @@
 </head>
 <body>
     <div class="card">
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">Welcome!</h1>
-        <p class="text-gray-600 mb-8">Choose your dashboard to log in.</p>
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">مرحباً بك!</h1>
+        <p class="text-gray-600 mb-8">اختر لوحة التحكم لتسجيل الدخول.</p>
 
         <a href="{{ url('/admin') }}" class="btn btn-admin">
-            Admin Dashboard
+            لوحة تحكم المدير
         </a>
 
         <a href="{{ url('/vendor-panel') }}" class="btn btn-vendor">
-            Vendor Dashboard
+            لوحة تحكم التاجر
         </a>
 
         <div class="mt-8 pt-6 border-t border-gray-100 hidden">
-            <p class="text-sm text-gray-500">Ecommerce API System</p>
+            <p class="text-sm text-gray-500">نظام المتجر الإلكتروني</p>
         </div>
     </div>
 </body>

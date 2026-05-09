@@ -51,6 +51,8 @@ class OrderController extends Controller
      *
      * Creates a new order from the authenticated user's cart and uploads the Sham Cash payment receipt image.
      * The cart is automatically emptied after successful order creation.
+     * Stock is automatically decreased for each ordered product.
+     * Validates that all products in the cart have sufficient stock before creating the order.
      *
      * @group Orders
      * @authenticated
@@ -69,7 +71,8 @@ class OrderController extends Controller
      *     "items": []
      *   }
      * }
-     * @response 400 {"message": "Your cart is empty."}
+     * @response 400 {"message": "السلة فارغة."}
+     * @response 422 {"message": "الكمية المطلوبة غير متوفرة.", "errors": {...}}
      */
     public function store(StoreOrderRequest $request)
     {
@@ -79,8 +82,25 @@ class OrderController extends Controller
 
         if (!$cart || $cart->items->isEmpty()) {
             return response()->json([
-                'message' => 'Your cart is empty.',
+                'message' => 'السلة فارغة.',
             ], 400);
+        }
+
+        // Validate stock availability for all items before creating the order
+        $stockErrors = [];
+        foreach ($cart->items as $item) {
+            if (!$item->product->is_active) {
+                $stockErrors[] = "المنتج \"{$item->product->name}\" غير متاح حالياً.";
+            } elseif (!$item->product->hasStock($item->quantity)) {
+                $stockErrors[] = "المنتج \"{$item->product->name}\": الكمية المطلوبة ({$item->quantity}) غير متوفرة. المتاح: {$item->product->stock}";
+            }
+        }
+
+        if (!empty($stockErrors)) {
+            return response()->json([
+                'message' => 'الكمية المطلوبة غير متوفرة لبعض المنتجات.',
+                'errors' => $stockErrors,
+            ], 422);
         }
 
         return DB::transaction(function () use ($request, $user, $cart) {
@@ -107,6 +127,9 @@ class OrderController extends Controller
                     'quantity'   => $item->quantity,
                     'price'      => $item->product->price,
                 ]);
+
+                // Decrease product stock
+                $item->product->decreaseStock($item->quantity);
             }
 
             CartItem::where('cart_id', $cart->id)->delete();

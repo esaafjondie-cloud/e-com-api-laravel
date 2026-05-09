@@ -19,20 +19,20 @@ class AdminStatsWidget extends BaseWidget
         $pendingOrders = Order::where('status', 'unpaid')->count();
 
         return [
-            Stat::make('Total Revenue', number_format($totalRevenue, 0) . ' SYP')
-                ->description('From all paid orders')
+            Stat::make('إجمالي الإيرادات', number_format($totalRevenue, 0) . ' ل.س')
+                ->description('من جميع الطلبات المدفوعة')
                 ->descriptionIcon('heroicon-m-banknotes')
                 ->color('success')
                 ->icon('heroicon-o-banknotes'),
 
-            Stat::make('Total Users', $totalUsers)
-                ->description('Registered customers')
+            Stat::make('إجمالي المستخدمين', $totalUsers)
+                ->description('العملاء المسجلين')
                 ->descriptionIcon('heroicon-m-users')
                 ->color('info')
                 ->icon('heroicon-o-users'),
 
-            Stat::make('Total Orders', $totalOrders)
-                ->description("{$pendingOrders} pending payment")
+            Stat::make('إجمالي الطلبات', $totalOrders)
+                ->description("{$pendingOrders} بانتظار الدفع")
                 ->descriptionIcon('heroicon-m-shopping-cart')
                 ->color('warning')
                 ->icon('heroicon-o-shopping-cart'),

@@ -19,53 +19,60 @@ class UserResource extends Resource
     protected static ?string $model = User::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-users';
-    protected static ?string $navigationLabel = 'Users';
+    protected static ?string $navigationLabel = 'المستخدمين';
+    protected static ?string $modelLabel = 'مستخدم';
+    protected static ?string $pluralModelLabel = 'المستخدمين';
     protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Personal Info')
+                Forms\Components\Section::make('المعلومات الشخصية')
                     ->schema([
                         Forms\Components\TextInput::make('name')
+                            ->label('الاسم')
                             ->required()
                             ->maxLength(255),
                         Forms\Components\TextInput::make('email')
+                            ->label('البريد الإلكتروني')
                             ->email()
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(255),
                         Forms\Components\TextInput::make('phone')
+                            ->label('الهاتف')
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(255),
                         Forms\Components\Select::make('role')
+                            ->label('الدور')
                             ->options([
-                                'admin'  => 'Admin',
-                                'vendor' => 'Vendor',
-                                'user'   => 'User',
+                                'admin'  => 'مدير النظام',
+                                'vendor' => 'تاجر',
+                                'user'   => 'مستخدم',
                             ])
                             ->required()
                             ->default('user'),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Security')
+                Forms\Components\Section::make('الأمان')
                     ->schema([
                         Forms\Components\TextInput::make('password')
+                            ->label('كلمة المرور (اتركه فارغاً للإبقاء على الحالية)')
                             ->password()
                             ->dehydrateStateUsing(fn($state) => !empty($state) ? Hash::make($state) : null)
                             ->dehydrated(fn($state) => !empty($state))
                             ->required(fn(string $context) => $context === 'create')
-                            ->maxLength(255)
-                            ->label('Password (leave blank to keep current)'),
+                            ->maxLength(255),
                         Forms\Components\DateTimePicker::make('email_verified_at')
-                            ->label('Email Verified At'),
+                            ->label('تاريخ توثيق البريد'),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Avatar')
+                Forms\Components\Section::make('الصورة الشخصية')
                     ->schema([
                         Forms\Components\FileUpload::make('avatar')
+                            ->label('الصورة الشخصية')
                             ->image()
                             ->disk('public')
                             ->directory('avatars')
@@ -79,17 +86,22 @@ class UserResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\ImageColumn::make('avatar')
+                    ->label('الصورة')
                     ->disk('public')
                     ->circular()
                     ->defaultImageUrl(fn() => 'https://ui-avatars.com/api/?name=User'),
                 Tables\Columns\TextColumn::make('name')
+                    ->label('الاسم')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('email')
+                    ->label('البريد الإلكتروني')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('phone')
+                    ->label('الهاتف')
                     ->searchable(),
                 Tables\Columns\BadgeColumn::make('role')
+                    ->label('الدور')
                     ->colors([
                         'danger'  => 'admin',
                         'warning' => 'vendor',
@@ -98,29 +110,31 @@ class UserResource extends Resource
                     ->sortable(),
                 Tables\Columns\IconColumn::make('email_verified_at')
                     ->boolean()
-                    ->label('Verified')
+                    ->label('موثق')
                     ->trueIcon('heroicon-o-check-badge')
                     ->falseIcon('heroicon-o-x-circle'),
                 Tables\Columns\TextColumn::make('created_at')
+                    ->label('تاريخ الإنشاء')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('role')
+                    ->label('الدور')
                     ->options([
-                        'admin'  => 'Admin',
-                        'vendor' => 'Vendor',
-                        'user'   => 'User',
+                        'admin'  => 'مدير النظام',
+                        'vendor' => 'تاجر',
+                        'user'   => 'مستخدم',
                     ]),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\EditAction::make()->label('تعديل'),
+                Tables\Actions\DeleteAction::make()->label('حذف'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()->label('حذف المحدد'),
                 ]),
             ]);
     }

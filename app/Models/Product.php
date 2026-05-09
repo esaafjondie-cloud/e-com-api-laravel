@@ -12,14 +12,15 @@ class Product extends Model
         'description',
         'price',
         'stock',
+        'sizes',
         'main_image',
-        'external_link',
         'is_active',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'price' => 'decimal:2',
+        'sizes' => 'array',
     ];
 
     public function category()
@@ -45,5 +46,29 @@ class Product extends Model
     public function favoritedBy()
     {
         return $this->belongsToMany(User::class, 'favorites')->withTimestamps();
+    }
+
+    /**
+     * Check if the requested quantity is available in stock.
+     */
+    public function hasStock(int $quantity): bool
+    {
+        return $this->stock >= $quantity;
+    }
+
+    /**
+     * Decrease product stock by given quantity.
+     */
+    public function decreaseStock(int $quantity): void
+    {
+        $this->decrement('stock', $quantity);
+    }
+
+    /**
+     * Scope: only products that are in stock.
+     */
+    public function scopeInStock($query)
+    {
+        return $query->where('stock', '>', 0);
     }
 }

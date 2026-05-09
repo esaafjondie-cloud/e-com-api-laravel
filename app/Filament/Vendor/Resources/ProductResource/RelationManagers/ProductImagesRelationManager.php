@@ -11,14 +11,14 @@ use Filament\Tables\Table;
 class ProductImagesRelationManager extends RelationManager
 {
     protected static string $relationship = 'images';
-    protected static ?string $title = 'Product Gallery';
+    protected static ?string $title = 'معرض صور المنتج';
 
     public function form(Form $form): Form
     {
         return $form
             ->schema([
                 Forms\Components\FileUpload::make('image_path')
-                    ->label('Image')
+                    ->label('الصورة')
                     ->image()
                     ->disk('public')
                     ->directory('products/gallery')
@@ -34,24 +34,25 @@ class ProductImagesRelationManager extends RelationManager
             ->columns([
                 Tables\Columns\ImageColumn::make('image_path')
                     ->disk('public')
-                    ->label('Image')
+                    ->label('الصورة')
                     ->square()
                     ->size(80),
                 Tables\Columns\TextColumn::make('created_at')
+                    ->label('تاريخ الإنشاء')
                     ->dateTime()
                     ->sortable(),
             ])
             ->filters([])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
+                Tables\Actions\CreateAction::make()->label('إضافة صورة'),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\EditAction::make()->label('تعديل'),
+                Tables\Actions\DeleteAction::make()->label('حذف'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()->label('حذف المحدد'),
                 ]),
             ]);
     }

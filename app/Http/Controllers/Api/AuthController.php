@@ -4,11 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Models\VerificationCode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -16,7 +13,8 @@ class AuthController extends Controller
     /**
      * Register a new user
      *
-     * Creates a new user account and sends an OTP code to their email for verification.
+     * Creates a new user account and returns an authentication token immediately.
+     * No email verification required.
      *
      * @group Authentication
      * @unauthenticated
@@ -28,8 +26,9 @@ class AuthController extends Controller
      * @bodyParam password_confirmation string required Confirm password. Example: password123
      *
      * @response 201 {
-     *   "message": "User registered successfully. Please verify your email.",
-     *   "user": {"id": 1, "name": "Ahmad Ali", "email": "user@example.com"}
+     *   "message": "تم إنشاء الحساب بنجاح.",
+     *   "user": {"id": 1, "name": "Ahmad Ali", "email": "user@example.com"},
+     *   "token": "1|abc123..."
      * }
      */
     public function register(Request $request)
@@ -42,72 +41,21 @@ class AuthController extends Controller
         ]);
 
         $user = User::create([
-            'name'     => $request->name,
-            'email'    => $request->email,
-            'phone'    => $request->phone,
-            'password' => Hash::make($request->password),
-            'role'     => 'user',
+            'name'              => $request->name,
+            'email'             => $request->email,
+            'phone'             => $request->phone,
+            'password'          => Hash::make($request->password),
+            'role'              => 'user',
+            'email_verified_at' => now(), // Auto-verify — no OTP needed
         ]);
 
-        $code = Str::random(6);
-
-        VerificationCode::create([
-            'email'      => $user->email,
-            'code'       => $code,
-            'expires_at' => now()->addMinutes(15),
-        ]);
-
-        Mail::raw("Your verification code is: {$code}", function ($message) use ($user) {
-            $message->to($user->email)->subject('Verify your email');
-        });
+        $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json([
-            'message' => 'User registered successfully. Please verify your email.',
+            'message' => 'تم إنشاء الحساب بنجاح.',
             'user'    => $user,
+            'token'   => $token,
         ], 201);
-    }
-
-    /**
-     * Verify Email OTP
-     *
-     * Verifies the OTP code sent to the user's email address.
-     *
-     * @group Authentication
-     * @unauthenticated
-     *
-     * @bodyParam email string required The user's email. Example: user@example.com
-     * @bodyParam code string required The 6-character OTP code received by email. Example: A1B2C3
-     *
-     * @response 200 {"message": "Email verified successfully."}
-     * @response 422 {"message": "The given data was invalid.", "errors": {"code": ["Invalid or expired verification code."]}}
-     */
-    public function verifyEmail(Request $request)
-    {
-        $request->validate([
-            'email' => 'required|email',
-            'code'  => 'required|string',
-        ]);
-
-        $verificationCode = VerificationCode::where('email', $request->email)
-            ->where('code', $request->code)
-            ->where('expires_at', '>', now())
-            ->first();
-
-        if (!$verificationCode) {
-            throw ValidationException::withMessages([
-                'code' => ['Invalid or expired verification code.'],
-            ]);
-        }
-
-        $user = User::where('email', $request->email)->first();
-        $user->email_verified_at = now();
-        $user->save();
-
-        $verificationCode->delete();
-
-        return response()->json([
-            'message' => 'Email verified successfully.',
-        ]);
     }
 
     /**
@@ -125,7 +73,7 @@ class AuthController extends Controller
      *   "user": {"id": 1, "name": "Test User 1", "email": "user1@app.com"},
      *   "token": "1|abc123..."
      * }
-     * @response 422 {"message": "The given data was invalid.", "errors": {"email": ["The provided credentials are incorrect."]}}
+     * @response 422 {"message": "البريد الإلكتروني أو كلمة المرور غير صحيحة."}
      */
     public function login(Request $request)
     {
@@ -138,7 +86,7 @@ class AuthController extends Controller
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
+                'email' => ['البريد الإلكتروني أو كلمة المرور غير صحيحة.'],
             ]);
         }
 
@@ -158,14 +106,14 @@ class AuthController extends Controller
      * @group Authentication
      * @authenticated
      *
-     * @response 200 {"message": "Logged out successfully."}
+     * @response 200 {"message": "تم تسجيل الخروج بنجاح."}
      */
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
 
         return response()->json([
-            'message' => 'Logged out successfully.',
+            'message' => 'تم تسجيل الخروج بنجاح.',
         ]);
     }
 
@@ -210,7 +158,7 @@ class AuthController extends Controller
      * @bodyParam password_confirmation string Optional. Required if password is provided.
      * @bodyParam avatar file Optional. The user's new avatar image.
      *
-     * @response 200 {"message": "Profile updated successfully.", "data": {...}}
+     * @response 200 {"message": "تم تحديث الملف الشخصي بنجاح.", "data": {...}}
      */
     public function updateProfile(Request $request)
     {
@@ -252,7 +200,7 @@ class AuthController extends Controller
         $user->save();
 
         return response()->json([
-            'message' => 'Profile updated successfully.',
+            'message' => 'تم تحديث الملف الشخصي بنجاح.',
             'data'    => [
                 'id'     => $user->id,
                 'name'   => $user->name,

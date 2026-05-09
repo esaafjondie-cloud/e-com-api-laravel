@@ -15,8 +15,9 @@ class ProductResource extends JsonResource
             'description' => $this->description,
             'price' => (float) $this->price,
             'stock' => $this->stock,
+            'in_stock' => $this->stock > 0,
+            'sizes' => $this->sizes,
             'main_image' => $this->main_image ? asset('storage/' . $this->main_image) : null,
-            'external_link' => $this->external_link,
             'is_active' => $this->is_active,
             'category' => [
                 'id' => $this->category->id,

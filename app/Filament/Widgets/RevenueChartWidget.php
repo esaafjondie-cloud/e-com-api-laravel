@@ -8,16 +8,18 @@ use Illuminate\Support\Carbon;
 
 class RevenueChartWidget extends ChartWidget
 {
-    protected static ?string $heading = 'Monthly Revenue (SYP)';
+    protected static ?string $heading = 'الإيرادات الشهرية (ل.س)';
     protected static ?int $sort = 2;
     protected int|string|array $columnSpan = 'full';
 
     protected function getData(): array
     {
-        $months = collect(range(5, 0))->map(function ($monthsAgo) {
+        $arabicMonths = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+
+        $months = collect(range(5, 0))->map(function ($monthsAgo) use ($arabicMonths) {
             $date = Carbon::now()->subMonths($monthsAgo);
             return [
-                'label'   => $date->format('M Y'),
+                'label'   => $arabicMonths[$date->month - 1] . ' ' . $date->year,
                 'revenue' => Order::whereYear('created_at', $date->year)
                     ->whereMonth('created_at', $date->month)
                     ->where('status', '!=', 'unpaid')
@@ -28,7 +30,7 @@ class RevenueChartWidget extends ChartWidget
         return [
             'datasets' => [
                 [
-                    'label'           => 'Revenue (SYP)',
+                    'label'           => 'الإيرادات (ل.س)',
                     'data'            => $months->pluck('revenue')->toArray(),
                     'borderColor'     => '#f59e0b',
                     'backgroundColor' => 'rgba(245,158,11,0.1)',

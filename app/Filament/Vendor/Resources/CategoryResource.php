@@ -15,7 +15,9 @@ class CategoryResource extends Resource
     protected static ?string $model = Category::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-tag';
-    protected static ?string $navigationLabel = 'Categories';
+    protected static ?string $navigationLabel = 'الفئات';
+    protected static ?string $modelLabel = 'فئة';
+    protected static ?string $pluralModelLabel = 'الفئات';
     protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
@@ -25,13 +27,15 @@ class CategoryResource extends Resource
                 Forms\Components\Section::make()
                     ->schema([
                         Forms\Components\TextInput::make('name')
+                            ->label('الاسم')
                             ->required()
                             ->maxLength(255),
                         Forms\Components\Toggle::make('is_active')
-                            ->label('Active')
+                            ->label('نشط')
                             ->default(true)
                             ->inline(false),
                         Forms\Components\FileUpload::make('image')
+                            ->label('الصورة')
                             ->image()
                             ->disk('public')
                             ->directory('categories')
@@ -46,32 +50,35 @@ class CategoryResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\ImageColumn::make('image')
+                    ->label('الصورة')
                     ->disk('public')
                     ->square(),
                 Tables\Columns\TextColumn::make('name')
+                    ->label('الاسم')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\IconColumn::make('is_active')
                     ->boolean()
-                    ->label('Active'),
+                    ->label('نشط'),
                 Tables\Columns\TextColumn::make('products_count')
                     ->counts('products')
-                    ->label('Products'),
+                    ->label('المنتجات'),
                 Tables\Columns\TextColumn::make('created_at')
+                    ->label('تاريخ الإنشاء')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\TernaryFilter::make('is_active')->label('Active'),
+                Tables\Filters\TernaryFilter::make('is_active')->label('نشط'),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\EditAction::make()->label('تعديل'),
+                Tables\Actions\DeleteAction::make()->label('حذف'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()->label('حذف المحدد'),
                 ]),
             ]);
     }

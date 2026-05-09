@@ -19,7 +19,9 @@ class OrderResource extends Resource
     protected static ?string $model = Order::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-shopping-cart';
-    protected static ?string $navigationLabel = 'Orders';
+    protected static ?string $navigationLabel = 'الطلبات';
+    protected static ?string $modelLabel = 'طلب';
+    protected static ?string $pluralModelLabel = 'الطلبات';
     protected static ?int $navigationSort = 3;
 
     public static function canCreate(): bool
@@ -31,15 +33,16 @@ class OrderResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Update Order Status')
+                Forms\Components\Section::make('تحديث حالة الطلب')
                     ->schema([
                         Forms\Components\Select::make('status')
+                            ->label('الحالة')
                             ->options([
-                                'unpaid'         => 'Unpaid',
-                                'paid'           => 'Paid',
-                                'shipped'        => 'Shipped',
-                                'delivered'      => 'Delivered',
-                                'shipping_issue' => 'Shipping Issue',
+                                'unpaid'         => 'غير مدفوع',
+                                'paid'           => 'مدفوع',
+                                'shipped'        => 'تم الشحن',
+                                'delivered'      => 'تم التوصيل',
+                                'shipping_issue' => 'مشكلة في الشحن',
                             ])
                             ->required(),
                     ]),
@@ -50,15 +53,17 @@ class OrderResource extends Resource
     {
         return $infolist
             ->schema([
-                Infolists\Components\Section::make('Order Info')
+                Infolists\Components\Section::make('معلومات الطلب')
                     ->schema([
-                        Infolists\Components\TextEntry::make('id')->label('Order #'),
-                        Infolists\Components\TextEntry::make('user.name')->label('Customer'),
-                        Infolists\Components\TextEntry::make('shipping_address'),
-                        Infolists\Components\TextEntry::make('shipping_phone'),
+                        Infolists\Components\TextEntry::make('id')->label('طلب رقم'),
+                        Infolists\Components\TextEntry::make('user.name')->label('العميل'),
+                        Infolists\Components\TextEntry::make('shipping_address')->label('عنوان التوصيل'),
+                        Infolists\Components\TextEntry::make('shipping_phone')->label('هاتف التوصيل'),
                         Infolists\Components\TextEntry::make('total_amount')
+                            ->label('المبلغ الإجمالي')
                             ->money('SYP'),
                         Infolists\Components\TextEntry::make('status')
+                            ->label('الحالة')
                             ->badge()
                             ->color(fn(string $state): string => match($state) {
                                 'unpaid'         => 'danger',
@@ -68,13 +73,13 @@ class OrderResource extends Resource
                                 'shipping_issue' => 'warning',
                                 default          => 'secondary',
                             }),
-                        Infolists\Components\TextEntry::make('notes'),
+                        Infolists\Components\TextEntry::make('notes')->label('ملاحظات'),
                     ])->columns(2),
 
-                Infolists\Components\Section::make('Payment Receipt — Verify Payment')
+                Infolists\Components\Section::make('إيصال الدفع — التحقق من الدفع')
                     ->schema([
                         Infolists\Components\ImageEntry::make('payment_receipt_image')
-                            ->label('Receipt Image uploaded by customer')
+                            ->label('صورة الإيصال المرفوعة بواسطة العميل')
                             ->disk('public')
                             ->width(450)
                             ->height(350),
@@ -87,16 +92,19 @@ class OrderResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')
-                    ->label('Order #')
+                    ->label('طلب رقم')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('user.name')
-                    ->label('Customer')
+                    ->label('العميل')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('total_amount')
+                    ->label('المبلغ الإجمالي')
                     ->money('SYP')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('shipping_phone'),
+                Tables\Columns\TextColumn::make('shipping_phone')
+                    ->label('هاتف التوصيل'),
                 Tables\Columns\BadgeColumn::make('status')
+                    ->label('الحالة')
                     ->colors([
                         'danger'  => 'unpaid',
                         'success' => 'paid',
@@ -105,22 +113,24 @@ class OrderResource extends Resource
                         'warning' => 'shipping_issue',
                     ]),
                 Tables\Columns\TextColumn::make('created_at')
+                    ->label('تاريخ الإنشاء')
                     ->dateTime()
                     ->sortable(),
             ])
             ->filters([
                 SelectFilter::make('status')
+                    ->label('الحالة')
                     ->options([
-                        'unpaid'         => 'Unpaid',
-                        'paid'           => 'Paid',
-                        'shipped'        => 'Shipped',
-                        'delivered'      => 'Delivered',
-                        'shipping_issue' => 'Shipping Issue',
+                        'unpaid'         => 'غير مدفوع',
+                        'paid'           => 'مدفوع',
+                        'shipped'        => 'تم الشحن',
+                        'delivered'      => 'تم التوصيل',
+                        'shipping_issue' => 'مشكلة في الشحن',
                     ]),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make()->label('عرض'),
+                Tables\Actions\EditAction::make()->label('تعديل'),
                 // NO Delete action for Vendor — security constraint
             ])
             ->bulkActions([])

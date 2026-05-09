@@ -18,20 +18,20 @@ class VendorStatsWidget extends BaseWidget
         $totalOrders    = Order::count();
 
         return [
-            Stat::make('Pending Orders', $pendingOrders)
-                ->description('Awaiting payment verification')
+            Stat::make('طلبات معلقة', $pendingOrders)
+                ->description('بانتظار التحقق من الدفع')
                 ->descriptionIcon('heroicon-m-clock')
                 ->color('danger')
                 ->icon('heroicon-o-clock'),
 
-            Stat::make('Paid Orders', $paidOrders)
-                ->description('Ready to ship')
+            Stat::make('طلبات مدفوعة', $paidOrders)
+                ->description('جاهزة للشحن')
                 ->descriptionIcon('heroicon-m-check-circle')
                 ->color('success')
                 ->icon('heroicon-o-check-circle'),
 
-            Stat::make('Shipped Orders', $shippedOrders)
-                ->description("Out of {$totalOrders} total")
+            Stat::make('طلبات تم شحنها', $shippedOrders)
+                ->description("من أصل {$totalOrders} طلب")
                 ->descriptionIcon('heroicon-m-truck')
                 ->color('info')
                 ->icon('heroicon-o-truck'),

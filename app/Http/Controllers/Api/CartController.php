@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Cart;
 use App\Models\CartItem;
+use App\Models\Product;
 use Illuminate\Http\Request;
 
 class CartController extends Controller
@@ -46,6 +47,7 @@ class CartController extends Controller
      * Add Item to Cart
      *
      * Adds a specific product to the user's cart or updates its quantity if it already exists.
+     * Validates that the requested quantity does not exceed available stock.
      *
      * @group Cart
      * @authenticated
@@ -54,13 +56,11 @@ class CartController extends Controller
      * @bodyParam quantity integer required The quantity to add. Example: 2
      *
      * @response 200 {
-     *   "message": "Item added to cart successfully.",
-     *   "cart_item": {
-     *     "id": 1,
-     *     "quantity": 2,
-     *     "product": {"id": 1, "name": "Sample Product"}
-     *   }
+     *   "message": "تمت إضافة المنتج إلى السلة بنجاح.",
+     *   "data": {"id": 1, "quantity": 2, "product": {"id": 1, "name": "Sample Product"}}
      * }
+     * @response 400 {"message": "المنتج غير متاح حالياً."}
+     * @response 422 {"message": "الكمية المطلوبة غير متوفرة. الكمية المتاحة: 3"}
      */
     public function store(Request $request)
     {
@@ -69,9 +69,41 @@ class CartController extends Controller
             'quantity' => 'required|integer|min:1',
         ]);
 
+        // Check if product is active
+        $product = Product::findOrFail($request->product_id);
+
+        if (!$product->is_active) {
+            return response()->json([
+                'message' => 'المنتج غير متاح حالياً.',
+            ], 400);
+        }
+
+        // Check stock availability
+        if (!$product->hasStock($request->quantity)) {
+            return response()->json([
+                'message' => "الكمية المطلوبة غير متوفرة. الكمية المتاحة: {$product->stock}",
+            ], 422);
+        }
+
         $cart = Cart::firstOrCreate(
             ['user_id' => $request->user()->id]
         );
+
+        // Check if item already in cart and validate total quantity
+        $existingItem = CartItem::where('cart_id', $cart->id)
+            ->where('product_id', $request->product_id)
+            ->first();
+
+        $totalQuantity = $request->quantity;
+        if ($existingItem) {
+            $totalQuantity = $request->quantity; // Replace quantity (not add)
+        }
+
+        if (!$product->hasStock($totalQuantity)) {
+            return response()->json([
+                'message' => "الكمية المطلوبة غير متوفرة. الكمية المتاحة: {$product->stock}",
+            ], 422);
+        }
 
         $cartItem = CartItem::updateOrCreate(
             [
@@ -84,7 +116,7 @@ class CartController extends Controller
         );
 
         return response()->json([
-            'message' => 'Item added to cart successfully.',
+            'message' => 'تمت إضافة المنتج إلى السلة بنجاح.',
             'data' => $cartItem->load('product'),
         ]);
     }
@@ -93,6 +125,7 @@ class CartController extends Controller
      * Update Cart Item Quantity
      *
      * Updates the quantity of a specific item in the cart.
+     * Validates that the new quantity does not exceed available stock.
      *
      * @group Cart
      * @authenticated
@@ -101,13 +134,10 @@ class CartController extends Controller
      * @bodyParam quantity integer required The new quantity. Example: 3
      *
      * @response 200 {
-     *   "message": "Cart item updated successfully.",
-     *   "cart_item": {
-     *     "id": 1,
-     *     "quantity": 3,
-     *     "product": {"id": 1, "name": "Sample Product"}
-     *   }
+     *   "message": "تم تحديث السلة بنجاح.",
+     *   "data": {"id": 1, "quantity": 3, "product": {"id": 1, "name": "Sample Product"}}
      * }
+     * @response 422 {"message": "الكمية المطلوبة غير متوفرة. الكمية المتاحة: 3"}
      */
     public function update(Request $request, $id)
     {
@@ -115,11 +145,19 @@ class CartController extends Controller
             'quantity' => 'required|integer|min:1',
         ]);
 
-        $cartItem = CartItem::findOrFail($id);
+        $cartItem = CartItem::with('product')->findOrFail($id);
+
+        // Check stock availability
+        if (!$cartItem->product->hasStock($request->quantity)) {
+            return response()->json([
+                'message' => "الكمية المطلوبة غير متوفرة. الكمية المتاحة: {$cartItem->product->stock}",
+            ], 422);
+        }
+
         $cartItem->update(['quantity' => $request->quantity]);
 
         return response()->json([
-            'message' => 'Cart item updated successfully.',
+            'message' => 'تم تحديث السلة بنجاح.',
             'data' => $cartItem->load('product'),
         ]);
     }
@@ -135,7 +173,7 @@ class CartController extends Controller
      * @urlParam id integer required The ID of the cart item. Example: 1
      *
      * @response 200 {
-     *   "message": "Item removed from cart successfully."
+     *   "message": "تم حذف المنتج من السلة بنجاح."
      * }
      */
     public function destroy($id)
@@ -144,7 +182,7 @@ class CartController extends Controller
         $cartItem->delete();
 
         return response()->json([
-            'message' => 'Item removed from cart successfully.',
+            'message' => 'تم حذف المنتج من السلة بنجاح.',
         ]);
     }
 }

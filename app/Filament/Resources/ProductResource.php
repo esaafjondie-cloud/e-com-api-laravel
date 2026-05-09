@@ -18,55 +18,107 @@ class ProductResource extends Resource
     protected static ?string $model = Product::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-shopping-bag';
-    protected static ?string $navigationLabel = 'Products';
+    protected static ?string $navigationLabel = 'المنتجات';
+    protected static ?string $modelLabel = 'منتج';
+    protected static ?string $pluralModelLabel = 'المنتجات';
     protected static ?int $navigationSort = 3;
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Product Info')
+                Forms\Components\Section::make('معلومات المنتج')
                     ->schema([
                         Forms\Components\TextInput::make('name')
+                            ->label('الاسم')
                             ->required()
                             ->maxLength(255),
                         Forms\Components\Select::make('category_id')
-                            ->label('Category')
+                            ->label('القسم')
                             ->options(Category::pluck('name', 'id'))
                             ->searchable()
                             ->required(),
                         Forms\Components\Textarea::make('description')
+                            ->label('الوصف')
                             ->required()
                             ->rows(3)
                             ->columnSpanFull(),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Pricing & Stock')
+                Forms\Components\Section::make('التسعير والمخزون')
                     ->schema([
                         Forms\Components\TextInput::make('price')
+                            ->label('السعر')
                             ->required()
                             ->numeric()
-                            ->prefix('SYP')
+                            ->prefix('ل.س')
                             ->step(0.01),
                         Forms\Components\TextInput::make('stock')
+                            ->label('المخزون')
                             ->required()
                             ->numeric()
                             ->minValue(0)
                             ->default(0),
-                        Forms\Components\TextInput::make('external_link')
-                            ->url()
-                            ->label('External Link (YouTube/Telegram)')
-                            ->nullable(),
                         Forms\Components\Toggle::make('is_active')
-                            ->label('Active')
+                            ->label('نشط')
                             ->default(true)
                             ->inline(false),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Main Image')
+                Forms\Components\Section::make('المقاسات والأحجام')
+                    ->schema([
+                        Forms\Components\Repeater::make('sizes')
+                            ->label('المقاسات')
+                            ->schema([
+                                Forms\Components\Select::make('size')
+                                    ->label('المقاس')
+                                    ->options([
+                                        'XS'   => 'XS - صغير جداً',
+                                        'S'    => 'S - صغير',
+                                        'M'    => 'M - وسط',
+                                        'L'    => 'L - كبير',
+                                        'XL'   => 'XL - كبير جداً',
+                                        'XXL'  => 'XXL - كبير جداً جداً',
+                                        '3XL'  => '3XL',
+                                        '36'   => '36',
+                                        '37'   => '37',
+                                        '38'   => '38',
+                                        '39'   => '39',
+                                        '40'   => '40',
+                                        '41'   => '41',
+                                        '42'   => '42',
+                                        '43'   => '43',
+                                        '44'   => '44',
+                                        '45'   => '45',
+                                        '46'   => '46',
+                                        '128GB'  => '128GB',
+                                        '256GB'  => '256GB',
+                                        '512GB'  => '512GB',
+                                        '1TB'    => '1TB',
+                                        'صغير'   => 'صغير',
+                                        'وسط'    => 'وسط',
+                                        'كبير'   => 'كبير',
+                                    ])
+                                    ->searchable()
+                                    ->required(),
+                                Forms\Components\TextInput::make('quantity')
+                                    ->label('الكمية المتوفرة')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->default(0)
+                                    ->required(),
+                            ])
+                            ->columns(2)
+                            ->addActionLabel('إضافة مقاس')
+                            ->collapsible()
+                            ->defaultItems(0)
+                            ->columnSpanFull(),
+                    ]),
+
+                Forms\Components\Section::make('الصورة الرئيسية')
                     ->schema([
                         Forms\Components\FileUpload::make('main_image')
-                            ->label('Main Product Image')
+                            ->label('صورة المنتج الرئيسية')
                             ->image()
                             ->disk('public')
                             ->directory('products')
@@ -80,40 +132,46 @@ class ProductResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\ImageColumn::make('main_image')
+                    ->label('الصورة')
                     ->disk('public')
                     ->square(),
                 Tables\Columns\TextColumn::make('name')
+                    ->label('الاسم')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('category.name')
-                    ->label('Category')
+                    ->label('القسم')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('price')
+                    ->label('السعر')
                     ->money('SYP')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('stock')
+                    ->label('المخزون')
                     ->sortable(),
                 Tables\Columns\IconColumn::make('is_active')
                     ->boolean()
-                    ->label('Active'),
+                    ->label('نشط'),
                 Tables\Columns\TextColumn::make('created_at')
+                    ->label('تاريخ الإنشاء')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('category')
+                    ->label('القسم')
                     ->relationship('category', 'name'),
                 Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Active'),
+                    ->label('نشط'),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\EditAction::make()->label('تعديل'),
+                Tables\Actions\DeleteAction::make()->label('حذف'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()->label('حذف المحدد'),
                 ]),
             ]);
     }

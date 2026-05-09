@@ -20,7 +20,9 @@ class SystemSettingResource extends Resource
     protected static ?string $model = SystemSetting::class;
 
     protected static ?string $navigationIcon  = 'heroicon-o-cog-6-tooth';
-    protected static ?string $navigationLabel = 'System Settings';
+    protected static ?string $navigationLabel = 'إعدادات النظام';
+    protected static ?string $modelLabel = 'إعداد نظام';
+    protected static ?string $pluralModelLabel = 'إعدادات النظام';
     protected static ?int    $navigationSort  = 5;
 
     // Only one record ever exists — disable create & delete
@@ -38,23 +40,23 @@ class SystemSettingResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Contact Information')
+                Forms\Components\Section::make('معلومات التواصل')
                     ->schema([
                         Forms\Components\TextInput::make('admin_phone')
-                            ->label('Admin Phone Number')
+                            ->label('رقم هاتف المدير')
                             ->required()
                             ->placeholder('+963912345678')
-                            ->helperText('The main contact number displayed to customers in the app.'),
+                            ->helperText('رقم التواصل الرئيسي المعروض للعملاء في التطبيق.'),
                     ]),
 
-                Forms\Components\Section::make('Payment — Sham Cash QR Code')
+                Forms\Components\Section::make('الدفع — رمز QR شام كاش')
                     ->schema([
                         Forms\Components\FileUpload::make('sham_cash_qr')
-                            ->label('QR Code Image')
+                            ->label('صورة رمز QR')
                             ->image()
                             ->disk('public')
                             ->directory('qr_codes')
-                            ->helperText('Upload the Sham Cash QR Code image shown to customers at checkout.'),
+                            ->helperText('ارفع صورة رمز QR شام كاش المعروضة للعملاء عند الدفع.'),
                     ]),
             ]);
     }
@@ -64,20 +66,20 @@ class SystemSettingResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('admin_phone')
-                    ->label('Admin Phone')
+                    ->label('هاتف المدير')
                     ->searchable(),
                 Tables\Columns\ImageColumn::make('sham_cash_qr')
-                    ->label('QR Code')
+                    ->label('صورة رمز QR')
                     ->disk('public')
                     ->height(60),
                 Tables\Columns\TextColumn::make('updated_at')
-                    ->label('Last Updated')
+                    ->label('آخر تحديث')
                     ->dateTime()
                     ->sortable(),
             ])
             ->filters([])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()->label('تعديل'),
             ])
             ->bulkActions([]);
     }

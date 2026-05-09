@@ -11,7 +11,6 @@ use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\FavoriteController;
 
 Route::post('/register', [AuthController::class, 'register']);
-Route::post('/verify-email', [AuthController::class, 'verifyEmail']);
 Route::post('/login', [AuthController::class, 'login']);
 
 Route::get('/settings', [SettingsController::class, 'index']);

@@ -18,18 +18,18 @@ class VendorStatsOverview extends BaseWidget
         $totalProducts = Product::count();
 
         return [
-            Stat::make('Total Category', $totalCategories)
-                ->description('All categories')
+            Stat::make('إجمالي الأقسام', $totalCategories)
+                ->description('جميع الأقسام')
                 ->descriptionIcon('heroicon-m-tag')
                 ->color('success'),
 
-            Stat::make('Total Orders', $totalOrders)
-                ->description('All orders received')
+            Stat::make('إجمالي الطلبات', $totalOrders)
+                ->description('كل الطلبات المستلمة')
                 ->descriptionIcon('heroicon-m-shopping-bag')
                 ->color('primary'),
 
-            Stat::make('Total Products', $totalProducts)
-                ->description('Products in catalog')
+            Stat::make('إجمالي المنتجات', $totalProducts)
+                ->description('المنتجات في الكتالوج')
                 ->descriptionIcon('heroicon-m-squares-2x2')
                 ->color('info'),
         ];
