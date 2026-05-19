@@ -13,7 +13,9 @@ class Product extends Model
         'price',
         'stock',
         'sizes',
+        'colors',
         'main_image',
+        'main_image_color',
         'is_active',
     ];
 
@@ -21,6 +23,7 @@ class Product extends Model
         'is_active' => 'boolean',
         'price' => 'decimal:2',
         'sizes' => 'array',
+        'colors' => 'array',
     ];
 
     public function category()

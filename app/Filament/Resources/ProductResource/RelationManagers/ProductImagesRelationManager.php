@@ -7,11 +7,18 @@ use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class ProductImagesRelationManager extends RelationManager
 {
     protected static string $relationship = 'images';
     protected static ?string $title = 'معرض صور المنتج';
+
+    public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
+    {
+        $category = $ownerRecord->category;
+        return $category && (str_contains($category->name, 'لبسة') || str_contains($category->name, 'ملابس'));
+    }
 
     public function form(Form $form): Form
     {
@@ -24,6 +31,15 @@ class ProductImagesRelationManager extends RelationManager
                     ->directory('products/gallery')
                     ->required()
                     ->columnSpanFull(),
+                Forms\Components\Select::make('color')
+                    ->label('اللون المرتبط بالصورة')
+                    ->options(function () {
+                        $colors = $this->ownerRecord->colors;
+                        if (!$colors || !is_array($colors)) return [];
+                        return array_combine($colors, $colors);
+                    })
+                    ->searchable()
+                    ->required(),
             ]);
     }
 
@@ -37,6 +53,10 @@ class ProductImagesRelationManager extends RelationManager
                     ->label('الصورة')
                     ->square()
                     ->size(80),
+                Tables\Columns\TextColumn::make('color')
+                    ->label('اللون')
+                    ->badge()
+                    ->color('primary'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('تاريخ الإنشاء')
                     ->dateTime()

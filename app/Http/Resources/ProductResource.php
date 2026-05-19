@@ -17,7 +17,9 @@ class ProductResource extends JsonResource
             'stock' => $this->stock,
             'in_stock' => $this->stock > 0,
             'sizes' => $this->sizes,
+            'colors' => $this->colors,
             'main_image' => $this->main_image ? asset('storage/' . $this->main_image) : null,
+            'main_image_color' => $this->main_image_color,
             'is_active' => $this->is_active,
             'category' => [
                 'id' => $this->category->id,
@@ -27,6 +29,7 @@ class ProductResource extends JsonResource
                 return [
                     'id' => $image->id,
                     'image_path' => asset('storage/' . $image->image_path),
+                    'color' => $image->color,
                 ];
             }),
             'created_at' => $this->created_at,

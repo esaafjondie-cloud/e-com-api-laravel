@@ -37,6 +37,7 @@ class ProductResource extends Resource
                             ->label('القسم')
                             ->options(Category::pluck('name', 'id'))
                             ->searchable()
+                            ->live()
                             ->required(),
                         Forms\Components\Textarea::make('description')
                             ->label('الوصف')
@@ -113,6 +114,16 @@ class ProductResource extends Resource
                             ->collapsible()
                             ->defaultItems(0)
                             ->columnSpanFull(),
+                        Forms\Components\TagsInput::make('colors')
+                            ->label('الألوان المتوفرة')
+                            ->placeholder('أضف لوناً واضغط Enter (مثال: أحمر، فستان بني، أخضر)')
+                            ->visible(function (Forms\Get $get) {
+                                $categoryId = $get('category_id');
+                                if (!$categoryId) return false;
+                                $category = \App\Models\Category::find($categoryId);
+                                return $category && (str_contains($category->name, 'لبسة') || str_contains($category->name, 'ملابس'));
+                            })
+                            ->columnSpanFull(),
                     ]),
 
                 Forms\Components\Section::make('الصورة الرئيسية')
@@ -123,6 +134,20 @@ class ProductResource extends Resource
                             ->disk('public')
                             ->directory('products')
                             ->required(),
+                        Forms\Components\Select::make('main_image_color')
+                            ->label('لون الصورة الرئيسية')
+                            ->options(function (Forms\Get $get) {
+                                $colors = $get('colors');
+                                if (!$colors || !is_array($colors)) return [];
+                                return array_combine($colors, $colors);
+                            })
+                            ->searchable()
+                            ->visible(function (Forms\Get $get) {
+                                $categoryId = $get('category_id');
+                                if (!$categoryId) return false;
+                                $category = \App\Models\Category::find($categoryId);
+                                return $category && (str_contains($category->name, 'لبسة') || str_contains($category->name, 'ملابس'));
+                            }),
                     ]),
             ]);
     }
